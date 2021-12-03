@@ -97,9 +97,11 @@
  * 2021.08.25 - relocated repository: padus -> sburke781
  *            - moved to ecowitt namespace
  * 2021.12.04 - Replaced "time" attribute with lastUpdate, thanks to @kahn-hubitat for writing and testing this change
+ * 2021.12.04 - Added nameserver lookup for remote gateways where their public IP address can change, thanks again to @kahn-hubitat
  */
+import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.30.30"; }
+public static String version() { return "v1.31.00"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
@@ -122,10 +124,13 @@ metadata {
 
     attribute "lastUpdate", "string";                          // Time last data was posted
     attribute "status", "string";                              // Display current driver status
+    attribute "dynamicIPResult","string"                       // Result of nameserver lookup
   }
 
   preferences {
     input(name: "macAddress", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>MAC / IP Address</font>", description: "<font style='font-size:12px; font-style: italic'>Wi-Fi gateway MAC or IP address</font>", defaultValue: "", required: true);
+    input(name: "DDNSName", type: "text", title: "Dynamic DNS Name to use to resolve a changing ip address. Leave Blank if not used.", description: "Enter DDNS Name", required: false)
+    input(name: "DDNSRefreshTime", type: "number", title: "How often (in Hours) to check/resolve the DDNS Name to discover an IP address change on a remote weather station? (Range 1 - 720, Default 24)?", range: "1..720", defaultValue: 3, required: false)
     input(name: "bundleSensors", type: "bool", title: "<font style='font-size:12px; color:#1a77c9'>Compound Outdoor Sensors</font>", description: "<font style='font-size:12px; font-style: italic'>Combine sensors in a virtual PWS array</font>", defaultValue: true);
     input(name: "unitSystem", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>System of Measurement</font>", description: "<font style='font-size:12px; font-style: italic'>Unit system all values are converted to</font>", options: [0:"Imperial", 1:"Metric"], multiple: false, defaultValue: 0, required: true);
     input(name: "logLevel", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Log Verbosity</font>", description: "<font style='font-size:12px; font-style: italic'>Default: 'Debug' for 30 min and 'Info' thereafter</font>", options: [0:"Error", 1:"Warning", 2:"Info", 3:"Debug", 4:"Trace"], multiple: false, defaultValue: 3, required: true);
@@ -370,6 +375,47 @@ private String dniUpdate() {
 
   return (error);
 }
+
+
+def nsCallback(resp, data) {
+  logDebug("in callback")
+
+  // test change
+
+  def jSlurp = new JsonSlurper()
+  Map ipData = (Map)jSlurp.parseText((String)resp.data)
+  def String newIP = ipData.Answer.data[0]
+  sendEvent(name:"dynamicIPResult", value:ipData.Answer.data[0])
+
+  // now compare ip to our own and if different reset and log
+  if ((newIP != null) && (newIP != ""))
+  {
+      def String currentIP = settings.macAddress
+      logInfo("Comparing resolved IP: $newIP to $currentIP")
+      
+      if (currentIP != newIP)
+      {
+          logInfo("IP address has Changed !!! Resetting DNI !")
+          Map dni = dniIsValid(newIP);
+          // Update Device Network ID
+          logDebug("got back dni = $dni")
+          if (dni) 
+          { 
+            device.updateSetting("macAddress", [type: "string", value: dni.canonical]);
+            dniUpdate();
+            resyncSensors();
+          }
+      }
+        
+  }
+}
+
+void DNSCheckCallback() {
+  logInfo("Dns Update Check Callback Startup")
+  updated()
+}
+
+
 
 // Logging --------------------------------------------------------------------------------------------------------------------
 
@@ -946,6 +992,33 @@ void updated() {
 
     // Unschedule possible previous runIn() calls
     unschedule();
+
+    // lgk if ddns name resolve this first and do ip check before dniupdatE.. ALSO schedule the re-check.
+    def String ddnsname = settings.DDNSName
+    def Number ddnsupdatetime = settings.DDNSRefreshTime
+                                          
+    logDebug("DDNS Name = $ddnsname")
+    logDebug("DDNS Refresh Time = $ddnsupdatetime")
+                                          
+    if ((ddnsname != null) && (ddnsname != "")) {
+      logDebug("Got ddns name $ddnsname")
+      // now resolve
+
+      Map params = [
+        uri: "https://8.8.8.8/resolve?name=$ddnsname&type=A",
+        contentType: "text/plain",
+        timeout: 20
+      ]
+
+      logDebug("calling dns Update url = $params")
+      asynchttpGet("nsCallback", params)
+    }
+    // now schedule next run of update
+    if ((ddnsupdatetime != null) && (ddnsupdatetime != 00)) {
+      def thesecs = ddnsupdatetime * 3600
+      logInfo("Rescheduling IP Address Check to run again in $thesecs seconds.")
+      runIn(thesecs, "DNSCheckCallback");
+    }
 
     // Update Device Network ID
     String error = dniUpdate();
