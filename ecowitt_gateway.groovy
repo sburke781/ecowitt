@@ -96,10 +96,10 @@
  * 2021.08.18 - relocated repository: mircolino -> padus
  * 2021.08.25 - relocated repository: padus -> sburke781
  *            - moved to ecowitt namespace
- *
+ * 2021.12.04 - Replaced "time" attribute with lastUpdate, thanks to @kahn-hubitat for writing and testing this change
  */
 
-public static String version() { return "v1.30.29"; }
+public static String version() { return "v1.30.30"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
@@ -120,7 +120,7 @@ metadata {
     attribute "rf", "string";                                  // Sensors radio frequency
     attribute "passkey", "string";                             // PASSKEY
 
-    attribute "time", "string";                                // Time last data was posted
+    attribute "lastUpdate", "string";                          // Time last data was posted
     attribute "status", "string";                              // Display current driver status
   }
 
@@ -369,30 +369,6 @@ private String dniUpdate() {
   }
 
   return (error);
-}
-
-// Conversion -----------------------------------------------------------------------------------------------------------------
-
-private String timeUtcToLocal(String time) {
-  //
-  // Convert a UTC date and time in the format "yyyy-MM-dd+HH:mm:ss" to a local time with locale format
-  //
-  try {
-    // Create a UTC formatter and parse the given time
-    java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyy-MM-dd+HH:mm:ss");
-    format.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-    Date date = format.parse(time);
-
-    // Create a local/locale formatter and format the given time
-    format = new java.text.SimpleDateFormat();
-    time = format.format(date);
-  }
-  catch (Exception e) {
-    logError("Exception in timeUtcToLocal(): ${e}");
-  }
-
-  return (time);
 }
 
 // Logging --------------------------------------------------------------------------------------------------------------------
@@ -902,7 +878,7 @@ private Boolean attributeUpdate(Map data, Closure sensor) {
       updated = sensor(it.key, it.value);
 
       // Last thing we do on the driver
-      if (attributeUpdateString(it.value, "time")) updated = true;
+      if (attributeUpdateString(it.value, "lastUpdate")) updated = true;
       break;
 
     default:
@@ -987,6 +963,9 @@ void updated() {
 
     // Turn off debug log in 30 minutes
     if (logGetLevel() > 2) runIn(1800, logDebugOff);
+
+    // lgk get rid of now unused time attribute
+    device.deleteCurrentState("time")
   }
   catch (Exception e) {
     logError("Exception in updated(): ${e}");
@@ -1049,8 +1028,8 @@ void parse(String msg) {
     // for it to be calculated properly, in "data", "pm10_24h_co2", if present, must come after "pm25_24h_co2"
 
     // Inject a special key (at the end of the data map) to notify all the driver of end-of-data status. Value is local time
-    data["endofdata"] = timeUtcToLocal(data["dateutc"]);
-    data.remove("dateutc");
+    def now = new Date().format('yyyy-MM-dd h:mm a',location.timeZone)
+    data["endofdata"] = now
 
     logData(data);
 
