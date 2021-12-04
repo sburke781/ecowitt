@@ -238,12 +238,18 @@ private Boolean unitSystemIsMetric(String reading) {
   //
   // Return true if the reading is configured for reporting in metric or the parent metric system
   //
+  //Check if we are overriding the reading units for this sensor
+  int ovrSetting = 3;
+  if (reading == 'pressure' && settings.ovrPressureUnits != null)  { ovrSetting = settings.ovrPressureUnits.toInteger() }
+  if (reading == 'temperature' && settings.ovrTempUnits != null)   { ovrSetting = settings.ovrTempUnits.toInteger() }
+  if (reading == 'rain' && settings.ovrRainUnits != null)          { ovrSetting = settings.ovrRainUnits.toInteger() }
+  if (reading == 'dist_speed' && settings.ovrDistSpdUnits != null) { ovrSetting = settings.ovrDistSpdUnits.toInteger() }
+  
+  // If we are not overriding, return the parent (Gateway) units
+  if (ovrSetting == null || ovrSetting >= 3) { return unitSystemIsMetric() }
+  else { return (ovrSetting.toInteger() != 0) }
 
-  //ovrPressureUnits
-//ovrTempUnits
-//ovrRainUnits
-//ovrDistSpdUnits
-  return unitSystemIsMetric();
+  
 }
 
 // ------------------------------------------------------------
@@ -601,7 +607,7 @@ private Boolean attributeUpdateTemperature(String val, String attribTemperature)
   }
 
   // Convert to metric if requested
-  if (unitSystemIsMetric()) {
+  if (unitSystemIsMetric('temperature')) {
     degrees = convert_F_to_C(degrees);
     measure = "°C";
   }
@@ -623,7 +629,7 @@ private Boolean attributeUpdateHumidity(String val, String attribHumidity) {
 private Boolean attributeUpdatePressure(String val, String attribPressure, String attribPressureAbs) {
 
   // Get unit system
-  Boolean metric = unitSystemIsMetric();
+  Boolean metric = unitSystemIsMetric('pressure');
 
   // Get number of decimals (default = 2)
   Integer decimals = settings.decsPressure;
@@ -691,7 +697,7 @@ private Boolean attributeUpdateRain(String val, String attribRain, Boolean hour 
   String measure = hour? "in/h": "in";
 
   // Convert to metric if requested
-  if (unitSystemIsMetric()) {
+  if (unitSystemIsMetric('rain')) {
     amount = convert_in_to_mm(amount);
     measure = hour? "mm/h": "mm";
   }
@@ -810,7 +816,7 @@ private Boolean attributeUpdateLightningDistance(String val, String attrib) {
   String measure = "km";
 
   // Convert to imperial if requested
-  if (unitSystemIsMetric() == false) {
+  if (unitSystemIsMetric('dist_speed') == false) {
     distance = convert_km_to_mi(distance);
     measure = "mi";
   }
@@ -892,7 +898,7 @@ private Boolean attributeUpdateWindSpeed(String val, String attribWindSpeed) {
   String measure = "mph";
 
   // Convert to metric if requested
-  if (unitSystemIsMetric()) {
+  if (unitSystemIsMetric('dist_speed')) {
     speed = convert_mi_to_km(speed);
     measure = "km/h";
   }
@@ -947,7 +953,7 @@ private Boolean attributeUpdateDewPoint(String val, String attribDewPoint, Strin
     BigDecimal temperature = (device.currentValue("temperature") as BigDecimal);
     if (temperature != null) {
 
-      if (!unitSystemIsMetric()) {
+      if (!unitSystemIsMetric('temperature')) {
         // Convert temperature to C
         temperature = convert_F_to_C(temperature);
       }
@@ -970,13 +976,13 @@ private Boolean attributeUpdateDewPoint(String val, String attribDewPoint, Strin
       // Calculate humidityAbs based on https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/
       BigDecimal volume = ((6.1121 * Math.exp((17.67 * tC) / (tC + 243.5)) * rH * 2.1674)) / (tC + 273.15);
 
-      if (!unitSystemIsMetric()) {
+      if (!unitSystemIsMetric('temperature')) {
         degrees = convert_C_to_F(degrees);
         volume = convert_gm3_to_ozyd3(volume);
       }
 
       if (attributeUpdateTemperature(degrees.toString(), attribDewPoint)) updated = true;
-      if (attributeUpdateNumber(volume, attribHumidityAbs, unitSystemIsMetric()? "g/m³": "oz/yd³", 2)) updated = true;
+      if (attributeUpdateNumber(volume, attribHumidityAbs, unitSystemIsMetric('temperature')? "g/m³": "oz/yd³", 2)) updated = true;
     }
   }
 
@@ -996,7 +1002,7 @@ private Boolean attributeUpdateHeatIndex(String val, String attribHeatIndex, Str
     BigDecimal temperature = (device.currentValue("temperature") as BigDecimal);
     if (temperature != null) {
 
-      if (unitSystemIsMetric()) {
+      if (unitSystemIsMetric('temperature')) {
         // Convert temperature back to F
         temperature = convert_C_to_F(temperature);
       }
@@ -1059,7 +1065,7 @@ private Boolean attributeUpdateSimmerIndex(String val, String attribSimmerIndex,
     BigDecimal temperature = (device.currentValue("temperature") as BigDecimal);
     if (temperature != null) {
 
-      if (unitSystemIsMetric()) {
+      if (unitSystemIsMetric('temperature')) {
         // Convert temperature back to F
         temperature = convert_C_to_F(temperature);
       }
@@ -1118,7 +1124,7 @@ private Boolean attributeUpdateWindChill(String val, String attribWindChill, Str
     BigDecimal temperature = (device.currentValue("temperature") as BigDecimal);
     if (temperature != null) {
 
-      if (unitSystemIsMetric()) {
+      if (unitSystemIsMetric('temperature')) {
         // Convert temperature back to F
         temperature = convert_C_to_F(temperature);
       }
