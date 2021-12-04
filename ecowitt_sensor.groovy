@@ -162,6 +162,10 @@ metadata {
     if (decsPressure != null) {
       input(name: "decsPressure", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Pressure decimals</font>", description: "<font style='font-size:12px; font-style: italic'>Enter a single digit number or -1 for no rounding</font>");
     }
+    input(name: "ovrPressureUnits", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Override Pressure Units</font>", description: "<font style='font-size:12px; font-style: italic'>Override unit system chosen in Gateway configuration</font>", options: [3: "Default", 0:"Imperial", 1:"Metric"], multiple: false, defaultValue: 3, required: false);
+    input(name: "ovrTempUnits", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Override Temperature Units</font>", description: "<font style='font-size:12px; font-style: italic'>Override unit system chosen in Gateway configuration</font>", options: [3: "Default", 0:"Imperial", 1:"Metric"], multiple: false, defaultValue: 3, required: false);
+    input(name: "ovrRainUnits", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Override Rain Units</font>", description: "<font style='font-size:12px; font-style: italic'>Override unit system chosen in Gateway configuration</font>", options: [3: "Default", 0:"Imperial", 1:"Metric"], multiple: false, defaultValue: 3, required: false);
+    input(name: "ovrDistSpdUnits", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Override Distance / Speed Units</font>", description: "<font style='font-size:12px; font-style: italic'>Override unit system chosen in Gateway configuration</font>", options: [3: "Default", 0:"Imperial", 1:"Metric"], multiple: false, defaultValue: 3, required: false);
   }
 }
 
@@ -228,6 +232,18 @@ private Boolean unitSystemIsMetric() {
   // Return true if the selected unit system is metric
   //
   return (getParent().unitSystemIsMetric());
+}
+
+private Boolean unitSystemIsMetric(String reading) {
+  //
+  // Return true if the reading is configured for reporting in metric or the parent metric system
+  //
+
+  //ovrPressureUnits
+//ovrTempUnits
+//ovrRainUnits
+//ovrDistSpdUnits
+  return unitSystemIsMetric();
 }
 
 // ------------------------------------------------------------
