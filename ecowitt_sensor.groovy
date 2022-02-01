@@ -31,6 +31,7 @@ metadata {
     capability "Illuminance Measurement";
     capability "Water Sensor";
     capability "Carbon Dioxide Measurement";
+    capability "Air Quality";
 
  // attribute "battery", "number";                             // 0-100%
     attribute "batteryIcon", "number";                         // 0, 20, 40, 60, 80, 100
@@ -762,6 +763,9 @@ private Boolean attributeUpdateAQI(String val, Boolean pm25, String attribAqi, S
     else if (aqi < 301) { danger = "Very Unhealthy";                 color = "b567a4"; }
     else if (aqi < 401) { danger = "Hazardous";                      color = "7e0023"; }
     else {                danger = "Hazardous";                      color = "7e0023"; }
+
+    // lgk set airQualityIndex only if actual aqi not avg
+    if (attribAqi == "aqi") attributeUpdateNumber(aqi, "airQualityIndex", "AQI");
 
     if (attributeUpdateString(danger, attribAqiDanger)) updated = true;
     if (attributeUpdateString(color, attribAqiColor)) updated = true;

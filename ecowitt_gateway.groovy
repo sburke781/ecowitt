@@ -98,10 +98,11 @@
  *            - moved to ecowitt namespace
  * 2021.12.04 - Replaced "time" attribute with lastUpdate, thanks to @kahn-hubitat for writing and testing this change
  * 2021.12.04 - Added nameserver lookup for remote gateways where their public IP address can change, thanks again to @kahn-hubitat
+ * 2022.02.02 - Added Air Quality capability and population of associated Air Quality attribute in sensor driver
  */
 import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.31.00"; }
+public static String version() { return "v1.32.00"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
