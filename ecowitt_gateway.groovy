@@ -101,10 +101,11 @@
  * 2022.02.02 - Added Air Quality capability and population of associated Air Quality attribute in sensor driver, thanks @kahn-hubitat
  * 2022.02.03 - Fixed bug with Air Quality update where it would only happen when HTML tile was enabled
  * 2022.16.05 - Added support for Leaf Wetness Sensor
+ * 2022.17.06 - Leaf Sensor adjustments for version handling
  */
 import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.32.01"; }
+public static String version() { return "v1.33.00"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
