@@ -112,10 +112,11 @@
  * 2023-07-02 - Fix for Dew Point in Celsius
  * 2023-09-24 - Updates for Wittboy battery readings and firmware (made by @xcguy)
  * 2023-09-24 - New runtime attribute, dateutc stored in data value and detection of gain30_piezo (not stored)
+ * 2023-09-25 - Fixed error in Lightning Distance reporting in KMs instead of miles
  */
 import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.34.09"; }
+public static String version() { return "v1.34.10"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }

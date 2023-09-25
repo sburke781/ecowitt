@@ -236,7 +236,12 @@ private Boolean unitSystemIsMetric() {
   //
   // Return true if the selected unit system is metric
   //
-  return (getParent().unitSystemIsMetric());
+  def isM = parent.unitSystemIsMetric()
+
+  if (isM == null)
+    return false
+  else return isM
+  
 }
 
 // ------------------------------------------------------------
@@ -827,7 +832,7 @@ private Boolean attributeUpdateLightningDistance(String val, String attrib) {
   String measure = "km";
 
   // Convert to imperial if requested
-  if (unitSystemIsMetric() == false) {
+  if (!unitSystemIsMetric()) {
     distance = convert_km_to_mi(distance);
     measure = "mi";
   }
