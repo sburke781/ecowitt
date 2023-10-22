@@ -113,10 +113,12 @@
  * 2023-09-24 - Updates for Wittboy battery readings and firmware (made by @xcguy)
  * 2023-09-24 - New runtime attribute, dateutc stored in data value and detection of gain30_piezo (not stored)
  * 2023-09-25 - Fixed error in Lightning Distance reporting in KMs instead of miles
+ * 2023-10-22 - Added option to forward data feed on to another hub
  */
 import groovy.json.JsonSlurper;
+import groovy.json.JsonOutput;
 
-public static String version() { return "v1.34.10"; }
+public static String version() { return "v1.34.11"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
@@ -147,6 +149,9 @@ metadata {
     input(name: "macAddress", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>MAC / IP Address</font>", description: "<font style='font-size:12px; font-style: italic'>Wi-Fi gateway MAC or IP address</font>", defaultValue: "", required: true);
     input(name: "DDNSName", type: "text", title: "<font style='font-size:12px; color:#1a77c9'>DDNS Name</font>", description: "<font style='font-size:12px; font-style: italic'>Dynamic DNS Name to use to resolve a changing ip address. Leave Blank if not used.</font>", required: false)
     input(name: "DDNSRefreshTime", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>DDNS Refresh Time (Hours)</font>",description: "<font style='font-size:12px; font-style: italic'>How often (in Hours) to check/resolve the DDNS Name to discover an IP address change on a remote weather station? (Range 1 - 720, Default 24)?</font>", range: "1..720", defaultValue: 3, required: false)
+    input(name: "forwardAddress", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Forwarding IP Address</font>", description: "<font style='font-size:12px; font-style: italic'>IP address of hub to forward data feed to (optional)</font>", defaultValue: "", required: false);
+    input(name: "forwardPort", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Forwarding Port</font>", description: "<font style='font-size:12px; font-style: italic'>Port of hub to forward data feed to (optional)</font>", defaultValue: "", required: false);
+    input(name: "forwardPath", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Forwarding Path</font>", description: "<font style='font-size:12px; font-style: italic'>Path of hub to forward data feed to (optional)</font>", defaultValue: "", required: false);
     input(name: "bundleSensors", type: "bool", title: "<font style='font-size:12px; color:#1a77c9'>Compound Outdoor Sensors</font>", description: "<font style='font-size:12px; font-style: italic'>Combine sensors in a virtual PWS array</font>", defaultValue: true);
     input(name: "unitSystem", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>System of Measurement</font>", description: "<font style='font-size:12px; font-style: italic'>Unit system all values are converted to</font>", options: [0:"Imperial", 1:"Metric"], multiple: false, defaultValue: 0, required: true);
     input(name: "logLevel", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Log Verbosity</font>", description: "<font style='font-size:12px; font-style: italic'>Default: 'Debug' for 30 min and 'Info' thereafter</font>", options: [0:"Error", 1:"Warning", 2:"Info", 3:"Debug", 4:"Trace"], multiple: false, defaultValue: 3, required: true);
@@ -1149,6 +1154,38 @@ void uninstalledChildDevice(String dni) {
 
 // ------------------------------------------------------------
 
+
+def forwardData(String msg) {
+
+    if(forwardAddress != null && forwardAddress != "") {
+        logDebug("forwardData() - forwarding to IP ${forwardAddress}, Port ${forwardPort} and Path ${forwardPath}");
+        logDebug("forwardData() - data = ${msg}");
+      def bodyForm = msg;
+      def postParams = [:];
+      def headers = [:];
+      headers.put("accept", "application/x-www-form-urlencoded");
+    
+      postParams = [
+          uri: "http://${forwardAddress}:${forwardPort}",
+          path: forwardPath,
+          headers: headers,
+          contentType: "application/x-www-form-urlencoded",
+          body : bodyForm,
+          ignoreSSLIssues: true
+      ];
+           
+      try {
+          httpPost(postParams){};
+      }
+      catch(Exception e)
+      {
+          logError("forwardData: Exception ${e}")   
+      }
+    }
+    
+}
+
+// ------------------------------------------------------------
 void parse(String msg) {
   //
   // Called everytime a POST message is received from the WiFi Gateway
@@ -1168,7 +1205,7 @@ void parse(String msg) {
       String[] keyValue = it.split("=");
       data[keyValue[0]] = (keyValue.size() > 1)? keyValue[1]: "";
     }
-
+      
     // "dewPoint" and "heatIndex" are based on "tempf" and "humidity"
     // for them to be calculated properly, in "data", "humidity", if present, must come after "tempf"
 
@@ -1214,10 +1251,14 @@ void parse(String msg) {
       logDebug("Driver on HE Hub updated, running versionUpdate() to update the driver attribute");
       versionUpdate();
     }
+    
+    // Forward the data on, if configured for the Gateway
+    forwardData(body);
   }
   catch (Exception e) {
     logError("Exception in parse(): ${e}");
   }
+  
 }
 
 // Recycle bin ----------------------------------------------------------------------------------------------------------------
