@@ -1175,7 +1175,7 @@ def forwardData(String msg) {
       ];
            
       try {
-          httpPost(postParams){};
+          asynchttpPost(postParams);
       }
       catch(Exception e)
       {
