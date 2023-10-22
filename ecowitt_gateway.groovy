@@ -116,7 +116,6 @@
  * 2023-10-22 - Added option to forward data feed on to another hub
  */
 import groovy.json.JsonSlurper;
-import groovy.json.JsonOutput;
 
 public static String version() { return "v1.34.11"; }
 public static String gitHubUser() { return "sburke781"; }
@@ -1154,7 +1153,6 @@ void uninstalledChildDevice(String dni) {
 
 // ------------------------------------------------------------
 
-
 def forwardData(String msg) {
 
     if(forwardAddress != null && forwardAddress != "") {
@@ -1205,7 +1203,7 @@ void parse(String msg) {
       String[] keyValue = it.split("=");
       data[keyValue[0]] = (keyValue.size() > 1)? keyValue[1]: "";
     }
-      
+
     // "dewPoint" and "heatIndex" are based on "tempf" and "humidity"
     // for them to be calculated properly, in "data", "humidity", if present, must come after "tempf"
 
@@ -1258,7 +1256,6 @@ void parse(String msg) {
   catch (Exception e) {
     logError("Exception in parse(): ${e}");
   }
-  
 }
 
 // Recycle bin ----------------------------------------------------------------------------------------------------------------
