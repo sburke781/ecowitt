@@ -114,10 +114,11 @@
  * 2023-09-24 - New runtime attribute, dateutc stored in data value and detection of gain30_piezo (not stored)
  * 2023-09-25 - Fixed error in Lightning Distance reporting in KMs instead of miles
  * 2023-10-22 - Added option to forward data feed on to another hub
+ * 2023-12-03 - Added Git Repo Version Monitoring setting and logic
  */
 import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.34.11"; }
+public static String version() { return "v1.34.12"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
@@ -153,6 +154,7 @@ metadata {
     input(name: "forwardPath", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Forwarding Path</font>", description: "<font style='font-size:12px; font-style: italic'>Path of hub to forward data feed to (optional)</font>", defaultValue: "", required: false);
     input(name: "bundleSensors", type: "bool", title: "<font style='font-size:12px; color:#1a77c9'>Compound Outdoor Sensors</font>", description: "<font style='font-size:12px; font-style: italic'>Combine sensors in a virtual PWS array</font>", defaultValue: true);
     input(name: "unitSystem", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>System of Measurement</font>", description: "<font style='font-size:12px; font-style: italic'>Unit system all values are converted to</font>", options: [0:"Imperial", 1:"Metric"], multiple: false, defaultValue: 0, required: true);
+    input(name: "monitorGitVersion", type: "bool", title: "<font style='font-size:12px; color:#1a77c9'>Monitor Git Driver Version</font>", description: "<font style='font-size:12px; font-style: italic'>Check Git Repository for New Driver Version</font>", defaultValue: true);
     input(name: "logLevel", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Log Verbosity</font>", description: "<font style='font-size:12px; font-style: italic'>Default: 'Debug' for 30 min and 'Info' thereafter</font>", options: [0:"Error", 1:"Warning", 2:"Info", 3:"Debug", 4:"Trace"], multiple: false, defaultValue: 3, required: true);
   }
 }
@@ -205,6 +207,16 @@ private Boolean bundleOutdoorSensors() {
   //
   if (settings.unitSystem != null) return (settings.unitSystem.toInteger() != 0);
   return (false);
+}
+
+// ------------------------------------------------------------
+
+private Boolean monitorGitVersion() {
+  //
+  // Return true if we are monitoring the Git repository for updates
+  //
+  if (settings.monitorGitVersion != null) return (settings.monitorGitVersion);
+  return (true);
 }
 
 // ------------------------------------------------------------
@@ -264,43 +276,66 @@ Boolean versionUpdate() {
   logDebug("versionUpdate()");
 
   Boolean ok = false;
+  Boolean devOk = false;
   String attribute = "driver";
 
-  try {
-    // Retrieve current version
-    Map verCur = versionExtract(version());
-    if (verCur) {
-      // Retrieve latest version from GitHub repository manifest
-      // If the file is not found, it will throw an exception
-      Map verNew = null;
-      String manifestText = "https://raw.githubusercontent.com/${gitHubUser()}/${gitHubRepo()}/${gitHubBranch()}/packageManifest.json".toURL().getText();
-      if (manifestText) {
-        // text -> json
-        Object parser = new groovy.json.JsonSlurper();
-        Object manifest = parser.parseText(manifestText);
+  // Retrieve current version from the driver
+  Map verCur = versionExtract(version());
+  // Retrieve the current version captured on the device
+  String devVer = device.currentValue(attribute);
 
-        verNew = versionExtract(manifest.version);
-        if (verNew) {
-          // Compare versions
-          if (verCur.major > verNew.major) verNew = null;
-          else if (verCur.major == verNew.major) {
-            if (verCur.minor > verNew.minor) verNew = null;
-            else if (verCur.minor == verNew.minor) {
-              if (verCur.build >= verNew.build) verNew = null;
+  // If the driver state variable has not been recorded on the device, update it
+  if (devVer == null || devVer == "") {
+    logDebug("versionUpdate: device driver version was empty, populating it now");
+    devOk = attributeUpdateString(verCur.desc, attribute);
+    devVer = verCur.desc;
+  }  
+
+  // If we are monitoring Git for new driver version, check the manifest file and compare to the current driver version
+  if(monitorGitVersion()) {
+
+    try {
+      
+      if (verCur) {
+        // Retrieve latest version from GitHub repository manifest
+        // If the file is not found, it will throw an exception
+        Map verNew = null;
+        String manifestText = "https://raw.githubusercontent.com/${gitHubUser()}/${gitHubRepo()}/${gitHubBranch()}/packageManifest.json".toURL().getText();
+        if (manifestText) {
+          // text -> json
+          Object parser = new groovy.json.JsonSlurper();
+          Object manifest = parser.parseText(manifestText);
+
+          verNew = versionExtract(manifest.version);
+          if (verNew) {
+            // Compare versions
+            if (verCur.major > verNew.major) verNew = null;
+            else if (verCur.major == verNew.major) {
+              if (verCur.minor > verNew.minor) verNew = null;
+              else if (verCur.minor == verNew.minor) {
+                if (verCur.build >= verNew.build) verNew = null;
+              }
             }
           }
         }
-      }
 
-      String version = verCur.desc;
-      if (verNew) version = "<font style='color:#3ea72d'>${verCur.desc} (${verNew.desc} available)</font>";
-      ok = attributeUpdateString(version, attribute);
+        String version = verCur.desc;
+        if (verNew) version = "<font style='color:#3ea72d'>${verCur.desc} (${verNew.desc} available)</font>";
+        ok = attributeUpdateString(version, attribute);
+      }
+    }
+    catch (Exception e) {
+      logError("Exception in versionUpdate(): ${e}");
     }
   }
-  catch (Exception e) {
-    logError("Exception in versionUpdate(): ${e}");
+  else {
+    ok = true;
+    // Capturing the situation where Git Repo monitoring has been turned off and a version update is still captured in the driver attribute
+    if(devVer != verCur.desc) {
+      logDebug("versionUpdate: Device driver version does not match the code, updating it now");
+      devOk = attributeUpdateString(verCur.desc, attribute);
+    }
   }
-
   return (ok);
 }
 
@@ -1112,9 +1147,11 @@ void updated() {
     else if (error != "") devStatus(error, "red");
     else resyncSensors();
 
-    // Update driver version now and every Sunday @ 2am
+    // Update driver version now and every Sunday @ 2am, if we are monitoring Git
     versionUpdate();
-    schedule("0 0 2 ? * 1 *", versionUpdate);
+    if(monitorGitVersion()) {
+      schedule("0 0 2 ? * 1 *", versionUpdate);
+    }
 
     // Turn off debug log in 30 minutes
     if (logGetLevel() > 2) runIn(1800, logDebugOff);
@@ -1243,9 +1280,11 @@ void parse(String msg) {
 
     attributeUpdate(data, this.&sensorUpdate);
     
+    //Driver Version Updates
+
     // If the driver has been updated on the HE hub, check that this is reflected in the driver attribute
-    // If not, run the version update to record the correct details
-    if(!(device.currentValue("driver").startsWith(versionExtract(version()).desc))) {
+    // If the current driver value is empty or different, run the version update to record the correct details
+    if(curVer == null || curVer == "" || !(curVer.startsWith(versionExtract(version()).desc))) {
       logDebug("Driver on HE Hub updated, running versionUpdate() to update the driver attribute");
       versionUpdate();
     }
