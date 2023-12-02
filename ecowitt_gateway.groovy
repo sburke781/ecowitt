@@ -118,7 +118,7 @@
  */
 import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.34.12"; }
+public static String version() { return "v1.34.13"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
