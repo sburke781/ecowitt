@@ -20,14 +20,21 @@
 
     <img src="https://github.com/sburke781/ecowitt/raw/main/images/D01.png" width="300" height="600">  
 
-2.  <span>Setup a local/customized weather service, a scheduled push of data from the Gateway to the Hubitat Elevation Hub.  Configure the data push:
+2.  <span>Setup a local/customized weather service, a scheduled push of data from the Gateway to the Hubitat Elevation Hub.  To access this:
+
+    In the WS View App tap "Menu", "Device List" and select (tap) your EcoWitt Gateway device.
+
+    Tap "More", "Weather Services" and keep tapping "Next" until you see a tab titled "Customized"
+
+    Configure the data push with the following settings:
     + Protocol Type is EcoWitt,
     + Server IP / Hostname is the address of your HE Hub,
     + Path is /data,
-    + Port is 39501
-    + Set the refresh frequency as you wish, 60 seconds or above is recommended.
-
-   <img src="https://github.com/sburke781/ecowitt/raw/main/images/D02.png" width="300" height="600">
+    + Port is 39501,
+    + Set the Upload Interval as you wish, 60 seconds or above is recommended
+  
+ <span>     
+     <img src="https://github.com/sburke781/ecowitt/raw/main/images/D02.png" width="300" height="600">
 
 #### Hubitat: 
 
