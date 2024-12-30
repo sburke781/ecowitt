@@ -115,6 +115,9 @@
  * 2023-09-25 - Fixed error in Lightning Distance reporting in KMs instead of miles
  * 2023-10-22 - Added option to forward data feed on to another hub
  * 2023-12-03 - Added Git Repo Version Monitoring setting and logic
+ * 12/24 lgk add srain_piezo = 0 1 and associated raining = true false, also firmware version/ws90_ver and ws90cap_volt firmware version and capacitor voltage are stuckon the wind device for now
+ 
+ 
  */
 import groovy.json.JsonSlurper;
 
@@ -909,6 +912,7 @@ private Boolean attributeUpdate(Map data, Closure sensor) {
     case "mrain_piezo":
     case "yrain_piezo":
     case "train_piezo": 
+    case "srain_piezo": 
       updated = sensor(it.key, it.value, 4);
       break;
     //
@@ -980,6 +984,8 @@ private Boolean attributeUpdate(Map data, Closure sensor) {
     case "maxdailygust":
     case "uv":
     case "solarradiation":
+    case "ws90cap_volt":
+    case "ws90_ver":
       updated = sensor(it.key, it.value, 9);
       break;
 
