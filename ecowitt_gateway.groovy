@@ -115,13 +115,13 @@
  * 2023-09-25 - Fixed error in Lightning Distance reporting in KMs instead of miles
  * 2023-10-22 - Added option to forward data feed on to another hub
  * 2023-12-03 - Added Git Repo Version Monitoring setting and logic
- * 12/24 lgk add srain_piezo = 0 1 and associated raining = true false, also firmware version/ws90_ver and ws90cap_volt firmware version and capacitor voltage are stuckon the wind device for now
+ * 2024-12-xx - lgk - add srain_piezo = 0 1 and associated raining = true false, also firmware version/ws90_ver and ws90cap_volt firmware version and capacitor voltage are stuckon the wind device for now
  
  
  */
 import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.34.13"; }
+public static String version() { return "v1.34.14"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
