@@ -14,6 +14,9 @@
  * for the specific language governing permissions and limitations under the License.
  *
  * Change Log: shared with ecowitt_gateway.groovy
+
+* lgk add srain_piezo and raining = true or false, also capacitorVoltage and firmware versions, stick the raing on the rain device and cap voltate and firmware version on the wind device
+ 
 */
 
 public static String gitHubUser() { return "sburke781"; }
@@ -52,6 +55,8 @@ metadata {
     attribute "batteryWind", "number";                         //
     attribute "batteryWindIcon", "number";                     // Only created/used when a WH68/WH80 is bundled in a PWS
     attribute "batteryWindOrg", "number";                      //
+    attribute "capacitorVoltage", "number";
+    attribute "ws90Firmware", "string";
 
  // attribute "temperature", "number";                         // °F
 
@@ -76,7 +81,8 @@ metadata {
     attribute "rainMonthly", "number";                         // in - rainfall in the current month
     attribute "rainYearly", "number";                          // in - rainfall in the current year
     attribute "rainTotal", "number";                           // in - rainfall total since sensor installation
-
+    attribute "raining", "string";                             // true false is it raining from srain_piezo
+    
     attribute "pm25", "number";                                // µg/m³ - PM2.5 particle reading - current
     attribute "pm25_avg_24h", "number";                        // µg/m³ - PM2.5 particle reading - average over the last 24 hours
     attribute "pm10", "number";                                // µg/m³ - PM10 particle reading - current
@@ -924,6 +930,15 @@ private Boolean attributeUpdateWindSpeed(String val, String attribWindSpeed) {
 
 // ------------------------------------------------------------
 
+private Boolean attributeUpdateCapacitorVoltage(String val, String attribCap) {
+
+  BigDecimal voltage = val.toBigDecimal();
+    
+  return (attributeUpdateNumber(voltage, attribCap));
+}
+
+// ------------------------------------------------------------
+
 private Boolean attributeUpdateWindDirection(String val, String attribWindDirection, String attribWindCompass) {
 
   BigDecimal direction = val.toBigDecimal();
@@ -1278,6 +1293,18 @@ Boolean attributeUpdate(String key, String val) {
     }
     break;
 
+  case ~/ws90cap_volt[1-8]/:
+   case "ws90cap_volt":
+    state.sensor = 1;
+    updated = attributeUpdateCapacitorVoltage(val, "capacitorVoltage");
+    break;
+ 
+   case ~/ws90_ver[1-8]/:
+   case "ws90_ver":
+    state.sensor = 1;
+    updated = attributeUpdateString(val, "ws90Firmware");
+    break;  
+    
   case ~/batt[1-8]/:
   case "wh25batt":
   case "wh65batt":
@@ -1355,6 +1382,14 @@ Boolean attributeUpdate(String key, String val) {
     updated = attributeUpdateRain(val, "rainRate", true);
     break;
 
+  case ~/srain_piezo[1-8]/:
+  case "srain_piezo":
+    if (debug) log.debug "Updating raining: $val"  
+    state.sensor = 1
+    if (val == 1)
+      updated = attributeUpdateString("true","raining");
+    else updated = attributeUpdateString("false","raining");    
+    
   case ~/eventrainin_wf[1-8]/:
   case "eventrainin":
   case "erain_piezo":
