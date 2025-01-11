@@ -1386,7 +1386,7 @@ Boolean attributeUpdate(String key, String val) {
   case "srain_piezo":
     if (debug) log.debug "Updating raining: $val"  
     state.sensor = 1
-    if (val == 1)
+    if (val == "1")
       updated = attributeUpdateString("true","raining");
     else updated = attributeUpdateString("false","raining");    
     
