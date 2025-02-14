@@ -116,12 +116,12 @@
  * 2023-10-22 - Added option to forward data feed on to another hub
  * 2023-12-03 - Added Git Repo Version Monitoring setting and logic
  * 2024-12-xx - lgk - add srain_piezo = 0 1 and associated raining = true false, also firmware version/ws90_ver and ws90cap_volt firmware version and capacitor voltage are stuckon the wind device for now
- 
+ * 2025-01-14 - lgk - fixed missing break statement when processing srain_piezo and raining attributes
  
  */
 import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.34.15"; }
+public static String version() { return "v1.34.16"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }

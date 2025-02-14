@@ -16,6 +16,7 @@
  * Change Log: shared with ecowitt_gateway.groovy
 
 * lgk add srain_piezo and raining = true or false, also capacitorVoltage and firmware versions, stick the raing on the rain device and cap voltate and firmware version on the wind device
+* lgk fixed missing break statement when processing srain_piezo and raining attributes
  
 */
 
@@ -1389,7 +1390,7 @@ Boolean attributeUpdate(String key, String val) {
     if (val == "1")
       updated = attributeUpdateString("true","raining");
     else updated = attributeUpdateString("false","raining");    
-    
+    break;
   case ~/eventrainin_wf[1-8]/:
   case "eventrainin":
   case "erain_piezo":
