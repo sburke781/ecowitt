@@ -17,7 +17,7 @@
 
 * lgk add srain_piezo and raining = true or false, also capacitorVoltage and firmware versions, stick the raing on the rain device and cap voltate and firmware version on the wind device
 * lgk fixed missing break statement when processing srain_piezo and raining attributes
- 
+* ikishk updated parsing of soil moisture detail to cater for more channels
 */
 
 public static String gitHubUser() { return "sburke781"; }
@@ -1315,7 +1315,7 @@ Boolean attributeUpdate(String key, String val) {
 
   case ~/batt_wf[1-8]/:
   case ~/leaf_batt[1-8]/:
-  case ~/soilbatt[1-8]/:
+  case ~/soilbatt([1-9]|1[0-6])$/:
   case ~/tf_batt[1-8]/:
 
     state.sensor = 1;
@@ -1359,7 +1359,7 @@ Boolean attributeUpdate(String key, String val) {
     if (attributeUpdateSimmerIndex(val, "simmerIndex", "simmerDanger", "simmerColor")) updated = true;
     break;
 
-  case ~/soilmoisture[1-8]/:
+  case ~/soilmoisture([1-9]|1[0-6])$/:
     updated = attributeUpdateHumidity(val, "humidity");
     break;  
       
