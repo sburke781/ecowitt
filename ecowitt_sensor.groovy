@@ -17,7 +17,9 @@
 
 * lgk add srain_piezo and raining = true or false, also capacitorVoltage and firmware versions, stick the raing on the rain device and cap voltate and firmware version on the wind device
 * lgk fixed missing break statement when processing srain_piezo and raining attributes
-* ikishk updated parsing of soil moisture detail to cater for more channels
+* ikishk and lgk - updated parsing of soil moisture detail to cater for more channels
+* lgk - also added soilad not sure what it is used for as it appears to be some kinda variable for cailbration see here.
+* https://www.reddit.com/r/myweatherstation/comments/18ngx4c/ecowitt_soil_moisture_showing_ad_in_additional_to/
 */
 
 public static String gitHubUser() { return "sburke781"; }
@@ -144,6 +146,7 @@ metadata {
     attribute "orphanedTemp", "enum", ["false", "true"];       // Whether or not the bundled WH32 is still receiving data from the gateway
     attribute "orphanedRain", "enum", ["false", "true"];       // Whether or not the bundled WH40 is still receiving data from the gateway
     attribute "orphanedWind", "enum", ["false", "true"];       // Whether or not the bundled WH68/WH80 sensor is still receiving data from the gateway    
+    attribute "soilAD", "number";
 
  // command "settingsResetConditional";                        // Used for backward compatibility to reset device conditional preferences
   }
@@ -642,6 +645,15 @@ private Boolean attributeUpdateLeafWetness(String val, String attribLeafWetness)
   BigDecimal percent = val.toBigDecimal();
 
   return (attributeUpdateNumber(percent, attribLeafWetness, "%", 0));
+}
+
+// ------------------------------------------------------------
+// lgk new fx
+private Boolean attributeUpdateSoilAD(String val, String attribsoilad) {
+ 
+    BigDecimal mv = val.toBigDecimal();  
+    
+   return (attributeUpdateNumber(mv, attribsoilad, "mv", 0));
 }
 
 // ------------------------------------------------------------
@@ -1362,7 +1374,11 @@ Boolean attributeUpdate(String key, String val) {
   case ~/soilmoisture([1-9]|1[0-6])$/:
     updated = attributeUpdateHumidity(val, "humidity");
     break;  
-      
+
+  case ~/soilad([1-9]|1[0-6])$/:
+     updated = attributeUpdateSoilAD(val, "soilAD")
+     break;
+
   case ~/leafwetness_ch[1-8]/:
     updated = attributeUpdateLeafWetness(val, "leafWetness");
     break; 

@@ -117,7 +117,7 @@
  * 2023-12-03 - Added Git Repo Version Monitoring setting and logic
  * 2024-12-xx - lgk - add srain_piezo = 0 1 and associated raining = true false, also firmware version/ws90_ver and ws90cap_volt firmware version and capacitor voltage are stuckon the wind device for now
  * 2025-01-14 - lgk - fixed missing break statement when processing srain_piezo and raining attributes
- * 2025-07-03 - ikishk updated parsing of soil moisture detail to cater for more channels
+ * 2025-07-03 - ikishk and lgk - cater for 16 soil moisture channels, addition of soilAD reading for soil moisture sensors (seems to be raw milivolt reading)
  */
 import groovy.json.JsonSlurper;
 
@@ -944,6 +944,7 @@ private Boolean attributeUpdate(Map data, Closure sensor) {
     //
     case ~/soilbatt([1-9]|1[0-6])$/:
     case ~/soilmoisture([1-9]|1[0-6])$/:
+    case ~/soilad([1-9]|1[0-6])$/:
       updated = sensor(it.key, it.value, 6, java.util.regex.Matcher.lastMatcher.group(1).toInteger());
       break;
 
