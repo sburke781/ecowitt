@@ -20,6 +20,7 @@
 * ikishk and lgk - updated parsing of soil moisture detail to cater for more channels
 * lgk - also added soilad not sure what it is used for as it appears to be some kinda variable for cailbration see here.
 * https://www.reddit.com/r/myweatherstation/comments/18ngx4c/ecowitt_soil_moisture_showing_ad_in_additional_to/
+* lgk - added vpd attribute
 */
 
 public static String gitHubUser() { return "sburke781"; }
@@ -147,6 +148,7 @@ metadata {
     attribute "orphanedRain", "enum", ["false", "true"];       // Whether or not the bundled WH40 is still receiving data from the gateway
     attribute "orphanedWind", "enum", ["false", "true"];       // Whether or not the bundled WH68/WH80 sensor is still receiving data from the gateway    
     attribute "soilAD", "number";
+    attribute "vpd", "number";                                 // Vapor Pressure Difference
 
  // command "settingsResetConditional";                        // Used for backward compatibility to reset device conditional preferences
   }
@@ -1546,6 +1548,14 @@ Boolean attributeUpdate(String key, String val) {
   case ~/maxdailygust_wf[1-8]/:
   case "maxdailygust":
     updated = attributeUpdateWindSpeed(val, "windGustMaxDaily");
+    break;
+
+  case ~/vpd[1-8]/:
+  case "vpd":
+    state.sensor = 1
+    Boolean metric = unitSystemIsMetric();
+    if (metric) attributeUpdateNumber(val.toBigDecimal(), "vpd", "inHg", 4);
+    else attributeUpdateNumber(val.toBigDecimal(), "vpd", "kPa", 4);
     break;
 
   //
