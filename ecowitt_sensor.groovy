@@ -17,7 +17,10 @@
 
 * lgk add srain_piezo and raining = true or false, also capacitorVoltage and firmware versions, stick the raing on the rain device and cap voltate and firmware version on the wind device
 * lgk fixed missing break statement when processing srain_piezo and raining attributes
- 
+* ikishk and lgk - updated parsing of soil moisture detail to cater for more channels
+* lgk - also added soilad not sure what it is used for as it appears to be some kinda variable for cailbration see here.
+* https://www.reddit.com/r/myweatherstation/comments/18ngx4c/ecowitt_soil_moisture_showing_ad_in_additional_to/
+* lgk - added vpd attribute
 */
 
 public static String gitHubUser() { return "sburke781"; }
@@ -144,6 +147,8 @@ metadata {
     attribute "orphanedTemp", "enum", ["false", "true"];       // Whether or not the bundled WH32 is still receiving data from the gateway
     attribute "orphanedRain", "enum", ["false", "true"];       // Whether or not the bundled WH40 is still receiving data from the gateway
     attribute "orphanedWind", "enum", ["false", "true"];       // Whether or not the bundled WH68/WH80 sensor is still receiving data from the gateway    
+    attribute "soilAD", "number";
+    attribute "vpd", "number";                                 // Vapor Pressure Difference
 
  // command "settingsResetConditional";                        // Used for backward compatibility to reset device conditional preferences
   }
@@ -642,6 +647,15 @@ private Boolean attributeUpdateLeafWetness(String val, String attribLeafWetness)
   BigDecimal percent = val.toBigDecimal();
 
   return (attributeUpdateNumber(percent, attribLeafWetness, "%", 0));
+}
+
+// ------------------------------------------------------------
+// lgk new fx
+private Boolean attributeUpdateSoilAD(String val, String attribsoilad) {
+ 
+    BigDecimal mv = val.toBigDecimal();  
+    
+   return (attributeUpdateNumber(mv, attribsoilad, "mv", 0));
 }
 
 // ------------------------------------------------------------
@@ -1315,7 +1329,7 @@ Boolean attributeUpdate(String key, String val) {
 
   case ~/batt_wf[1-8]/:
   case ~/leaf_batt[1-8]/:
-  case ~/soilbatt[1-8]/:
+  case ~/soilbatt([1-9]|1[0-6])$/:
   case ~/tf_batt[1-8]/:
 
     state.sensor = 1;
@@ -1359,10 +1373,14 @@ Boolean attributeUpdate(String key, String val) {
     if (attributeUpdateSimmerIndex(val, "simmerIndex", "simmerDanger", "simmerColor")) updated = true;
     break;
 
-  case ~/soilmoisture[1-8]/:
+  case ~/soilmoisture([1-9]|1[0-6])$/:
     updated = attributeUpdateHumidity(val, "humidity");
     break;  
-      
+
+  case ~/soilad([1-9]|1[0-6])$/:
+     updated = attributeUpdateSoilAD(val, "soilAD")
+     break;
+
   case ~/leafwetness_ch[1-8]/:
     updated = attributeUpdateLeafWetness(val, "leafWetness");
     break; 
@@ -1530,6 +1548,14 @@ Boolean attributeUpdate(String key, String val) {
   case ~/maxdailygust_wf[1-8]/:
   case "maxdailygust":
     updated = attributeUpdateWindSpeed(val, "windGustMaxDaily");
+    break;
+
+  case ~/vpd[1-8]/:
+  case "vpd":
+    state.sensor = 1
+    Boolean metric = unitSystemIsMetric();
+    if (metric) attributeUpdateNumber(val.toBigDecimal(), "vpd", "inHg", 4);
+    else attributeUpdateNumber(val.toBigDecimal(), "vpd", "kPa", 4);
     break;
 
   //

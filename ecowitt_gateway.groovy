@@ -117,11 +117,12 @@
  * 2023-12-03 - Added Git Repo Version Monitoring setting and logic
  * 2024-12-xx - lgk - add srain_piezo = 0 1 and associated raining = true false, also firmware version/ws90_ver and ws90cap_volt firmware version and capacitor voltage are stuckon the wind device for now
  * 2025-01-14 - lgk - fixed missing break statement when processing srain_piezo and raining attributes
- 
+ * 2025-07-03 - ikishk and lgk - cater for 16 soil moisture channels, addition of soilAD reading for soil moisture sensors (seems to be raw milivolt reading)
+ * 2025-07-04 - lgk - added updateInterval and vpd attributes
  */
 import groovy.json.JsonSlurper;
 
-public static String version() { return "v1.34.16"; }
+public static String version() { return "v1.34.17"; }
 public static String gitHubUser() { return "sburke781"; }
 public static String gitHubRepo() { return "ecowitt"; }
 public static String gitHubBranch() { return "main"; }
@@ -146,6 +147,7 @@ metadata {
     attribute "status", "string";                              // Display current driver status
     attribute "dynamicIPResult","string"                       // Result of nameserver lookup
     attribute "runtime","number"                               // Run time
+    attribute "updateInterval","number"                        // Time between custom data feeds being sent from the EcoWitt Gateway to HE
   }
 
   preferences {
@@ -830,6 +832,12 @@ private Boolean attributeUpdate(Map data, Closure sensor) {
     //
     // Gateway attributes
     //
+
+    case "interval":
+      // added in EcoWitt firmware 2.4.0 as the time between custom data feeds
+      updated = attributeUpdateNumber(it.value.toInteger(), "updateInterval");
+      break;
+
     case "model":
       // Eg: model = GW1000_Pro
       updated = attributeUpdateString(it.value, "model");
@@ -875,6 +883,7 @@ private Boolean attributeUpdate(Map data, Closure sensor) {
     case "wh26batt":
     case "tempf":
     case "humidity":
+    case "vpd":
       updated = sensor(it.key, it.value, 2);
       break;
 
@@ -942,8 +951,9 @@ private Boolean attributeUpdate(Map data, Closure sensor) {
     //
     // Multi-channel Soil Moisture Sensor (WH51)
     //
-    case ~/soilbatt([1-8])/:
-    case ~/soilmoisture([1-8])/:
+    case ~/soilbatt([1-9]|1[0-6])$/:
+    case ~/soilmoisture([1-9]|1[0-6])$/:
+    case ~/soilad([1-9]|1[0-6])$/:
       updated = sensor(it.key, it.value, 6, java.util.regex.Matcher.lastMatcher.group(1).toInteger());
       break;
 
