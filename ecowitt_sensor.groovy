@@ -183,6 +183,9 @@ metadata {
     if (decsPressure != null) {
       input(name: "decsPressure", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Pressure decimals</font>", description: "<font style='font-size:12px; font-style: italic'>Enter a single digit number or -1 for no rounding</font>");
     }
+    if (decsPressure != null) {
+      input(name: 'decsPressureUnits', type: 'enum', title: "<font style='font-size:12px; color:#1a77c9'>Pressure units</font>", description: "<font style='font-size:12px; font-style: italic'>Select the units for pressure</font>", defaultValue: pressureUnitDefault(), options: ['inHg','hPa'])
+    }
   }
 }
 
@@ -256,6 +259,13 @@ private Boolean unitSystemIsMetric() {
   
 }
 
+private String pressureUnitDefault() {
+    if (unitSystemIsMetric()) {
+        return "hPa"
+    } else {
+        return "inHg"
+    }
+}
 // ------------------------------------------------------------
 
 private String timeEpochToLocal(String time) {
@@ -710,7 +720,7 @@ private Boolean attributeUpdatePressure(String val, String attribPressure, Strin
   BigDecimal relative = absolute * Math.pow(1 - ((altitude * 0.0065) / (temperature + (altitude * 0.0065) + 273.15)), -5.257);
 
   // Convert to imperial if requested
-  if (metric) val = "hPa";
+  if (metric || settings.decsPressureUnits == "hPa") val = "hPa";
   else {
     absolute = convert_hPa_to_inHg(absolute);
     relative = convert_hPa_to_inHg(relative);
