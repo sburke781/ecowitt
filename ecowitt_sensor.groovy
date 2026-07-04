@@ -148,6 +148,7 @@ metadata {
     attribute "orphanedRain", "enum", ["false", "true"];       // Whether or not the bundled WH40 is still receiving data from the gateway
     attribute "orphanedWind", "enum", ["false", "true"];       // Whether or not the bundled WH68/WH80 sensor is still receiving data from the gateway    
     attribute "soilAD", "number";
+    attribute "soilEC", "number";                              // uS/cm - soil electrical conductivity (WH52)
     attribute "vpd", "number";                                 // Vapor Pressure Difference
 
  // command "settingsResetConditional";                        // Used for backward compatibility to reset device conditional preferences
@@ -656,6 +657,15 @@ private Boolean attributeUpdateSoilAD(String val, String attribsoilad) {
     BigDecimal mv = val.toBigDecimal();  
     
    return (attributeUpdateNumber(mv, attribsoilad, "mv", 0));
+}
+
+// ------------------------------------------------------------
+
+private Boolean attributeUpdateSoilEC(String val, String attribSoilEC) {
+
+  BigDecimal ec = val.toBigDecimal();
+
+  return (attributeUpdateNumber(ec, attribSoilEC, "µS/cm", 0));
 }
 
 // ------------------------------------------------------------
@@ -1330,6 +1340,7 @@ Boolean attributeUpdate(String key, String val) {
   case ~/batt_wf[1-8]/:
   case ~/leaf_batt[1-8]/:
   case ~/soilbatt([1-9]|1[0-6])$/:
+  case ~/soil_ec_batt([1-9]|1[0-6])$/:
   case ~/tf_batt[1-8]/:
 
     state.sensor = 1;
@@ -1359,6 +1370,7 @@ Boolean attributeUpdate(String key, String val) {
   case ~/temp[1-8]f/:
   case ~/tf_ch[1-8]/:
   case "tf_co2":
+  case ~/soil_ec_temp([1-9]|1[0-6])$/:
     updated = attributeUpdateTemperature(val, "temperature");
     break;
 
@@ -1376,6 +1388,14 @@ Boolean attributeUpdate(String key, String val) {
   case ~/soilmoisture([1-9]|1[0-6])$/:
     updated = attributeUpdateHumidity(val, "humidity");
     break;  
+
+  case ~/soil_ec_hum([1-9]|1[0-6])$/:
+    updated = attributeUpdateHumidity(val, "humidity");
+    break;
+
+  case ~/soil_ec([1-9]|1[0-6])$/:
+    updated = attributeUpdateSoilEC(val, "soilEC");
+    break;
 
   case ~/soilad([1-9]|1[0-6])$/:
      updated = attributeUpdateSoilAD(val, "soilAD")

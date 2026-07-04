@@ -575,7 +575,7 @@ private void sensorMapping(Map data) {
   // Remap sensors, boundling or decoupling devices, depending on what's present
   //
   //                     0       1       2       3       4       5       6       7       8       9       10      11        12     13
-  String[] sensorMap =  ["WH69", "WH25", "WH26", "WH31", "WH40", "WH41", "WH51", "WH55", "WH57", "WH80", "WH34", "WFST", "WN35", "WS90"];
+  String[] sensorMap =  ["WH69", "WH25", "WH26", "WH31", "WH40", "WH41", "WH51", "WH55", "WH57", "WH80", "WH34", "WFST", "WN35", "WS90", "WH52"];
 
   logDebug("sensorMapping()");
 
@@ -669,7 +669,8 @@ private String sensorName(Integer id, Integer channel) {
                   "WH80": "Wind Solar Sensor",
                   "WH34": "Water/Soil Temperature Sensor",
                   "WFST": "WeatherFlow Station",
-                  "WN35": "Leaf Wetness Sensor"];
+                  "WN35": "Leaf Wetness Sensor",
+                  "WH52": "Soil Moisture/EC Sensor"];
 
   String model = sensorId."${sensorModel(id)}";
 
@@ -955,6 +956,16 @@ private Boolean attributeUpdate(Map data, Closure sensor) {
     case ~/soilmoisture([1-9]|1[0-6])$/:
     case ~/soilad([1-9]|1[0-6])$/:
       updated = sensor(it.key, it.value, 6, java.util.regex.Matcher.lastMatcher.group(1).toInteger());
+      break;
+
+    //
+    // Multi-channel Soil Moisture/EC Sensor (WH52)
+    //
+    case ~/soil_ec_hum([1-9]|1[0-6])$/:
+    case ~/soil_ec_batt([1-9]|1[0-6])$/:
+    case ~/soil_ec_temp([1-9]|1[0-6])$/:
+    case ~/soil_ec([1-9]|1[0-6])$/:
+      updated = sensor(it.key, it.value, 14, java.util.regex.Matcher.lastMatcher.group(1).toInteger());
       break;
 
     //
